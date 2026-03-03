@@ -1,10 +1,11 @@
 ﻿"use client";
 
 import { useRef } from "react";
-import type { TouchEvent as ReactTouchEvent, WheelEvent as ReactWheelEvent } from "react";
+import type { UIEvent as ReactUIEvent, WheelEvent as ReactWheelEvent } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { scheduleScrollTriggerRefresh } from "@/lib/scrollTriggerRefresh";
 import { useSplitLines } from "@/components/typography/useSplitLines";
 import { useSplitScale } from "@/components/typography/useSplitScale";
 import { Section } from "@/components/layout/Section";
@@ -14,7 +15,7 @@ const detailSlides = [
     title: "S1 – STRATEGIE & MARKE",
     subline: "Fundament schaffen, bevor Maßnahmen starten.",
     mediaType: "videoLeft",
-    mediaSrc: "/assets/sections/modell-detail/Martin 1X1 - Clean 28RF - kompimiert.mp4",
+    mediaSrc: "/assets/sections/modell-detail/Martin 1x1 - HEMD - clean.mp4",
     body: "Hier entsteht Klarheit. Ohne sie wird Wachstum beliebig und zufällig.",
     list: [
       "Bestandsaufnahme Marketing- & Vertriebssystem",
@@ -98,74 +99,25 @@ const detailSlides = [
 ];
 
 export default function ModellDetailSection() {
-  const LOCK_IDLE_MS = 500;
-  const GESTURE_IDLE_MS = 120;
+  const LIST_SCROLL_GUARD_MS = 200;
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const stackRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
   const listRefs = useRef<Array<HTMLDivElement | null>>([]);
   const activeIndexRef = useRef(0);
   const isAnimatingRef = useRef(false);
-  const isListScrollLockRef = useRef(false);
-  const isPostSlideBoundaryLockRef = useRef(false);
-  const postSlideLockDirectionRef = useRef<1 | -1 | 0>(0);
-  const gestureActiveRef = useRef(false);
-  const gestureIdleTimerRef = useRef<number | null>(null);
-  const listScrollUnlockTimerRef = useRef<number | null>(null);
+  const listScrollGuardUntilRef = useRef(0);
 
   useSplitScale({ scope: sectionRef });
   useSplitLines({ scope: sectionRef });
 
-  const clearListScrollLock = () => {
-    if (listScrollUnlockTimerRef.current !== null) {
-      window.clearTimeout(listScrollUnlockTimerRef.current);
-      listScrollUnlockTimerRef.current = null;
-    }
-    isListScrollLockRef.current = false;
+  const markListScrollGuard = () => {
+    listScrollGuardUntilRef.current = Date.now() + LIST_SCROLL_GUARD_MS;
   };
 
-  const refreshListScrollLock = () => {
-    isListScrollLockRef.current = true;
-    if (listScrollUnlockTimerRef.current !== null) {
-      window.clearTimeout(listScrollUnlockTimerRef.current);
-      listScrollUnlockTimerRef.current = null;
-    }
-    listScrollUnlockTimerRef.current = window.setTimeout(() => {
-      isListScrollLockRef.current = false;
-      listScrollUnlockTimerRef.current = null;
-    }, LOCK_IDLE_MS);
-  };
+  const isListScrollGuardActive = () => Date.now() < listScrollGuardUntilRef.current;
 
-  const clearGestureIdleTimer = () => {
-    if (gestureIdleTimerRef.current !== null) {
-      window.clearTimeout(gestureIdleTimerRef.current);
-      gestureIdleTimerRef.current = null;
-    }
-  };
-
-  const markGestureActivity = () => {
-    const isNewGesture = !gestureActiveRef.current;
-    gestureActiveRef.current = true;
-    clearGestureIdleTimer();
-    gestureIdleTimerRef.current = window.setTimeout(() => {
-      gestureActiveRef.current = false;
-      gestureIdleTimerRef.current = null;
-    }, GESTURE_IDLE_MS);
-    return isNewGesture;
-  };
-
-  const activatePostSlideBoundaryLock = (direction: 1 | -1) => {
-    isPostSlideBoundaryLockRef.current = true;
-    postSlideLockDirectionRef.current = direction;
-  };
-
-  const clearPostSlideBoundaryLock = () => {
-    isPostSlideBoundaryLockRef.current = false;
-    postSlideLockDirectionRef.current = 0;
-  };
-
-  const isScrollBlocked = () =>
-    isAnimatingRef.current || isListScrollLockRef.current || isPostSlideBoundaryLockRef.current;
+  const isScrollBlocked = () => isAnimatingRef.current || isListScrollGuardActive();
 
   useGSAP(
     () => {
@@ -187,76 +139,72 @@ export default function ModellDetailSection() {
         const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
         if (!cards.length) return;
 
-        const count = cards.length;
-        const SLIDE_SWITCH_THRESHOLD = 0.30;
-        const SLIDE_SWITCH_BIAS = 1 - SLIDE_SWITCH_THRESHOLD;
-
-        cards.forEach((card, index) => {
-          gsap.set(card, {
-            yPercent: index === 0 ? 0 : 100,
-            autoAlpha: index === 0 ? 1 : 0,
-            zIndex: index + 1
-          });
-        });
-
+        let resizeTimer: number | null = null;
+        let lastViewportWidth = window.innerWidth;
+        let lastViewportHeight = window.innerHeight;
         let trigger: ScrollTrigger | null = null;
-        let touchStartY = 0;
-        let listScrollTween: gsap.core.Tween | null = null;
-        let controlledList: HTMLDivElement | null = null;
-        const scrollState = { value: 0, target: 0 };
+        let queuedStage: number | null = null;
+
+        const count = cards.length;
+        const snapPoints =
+          count > 1 ? Array.from({ length: count }, (_, index) => index / (count - 1)) : [0];
+
         const clampIndex = (value: number) =>
           Math.min(count - 1, Math.max(0, value));
 
-        const getMaxScroll = (listEl: HTMLDivElement) =>
-          Math.max(0, listEl.scrollHeight - listEl.clientHeight);
-
-        const clampScroll = (listEl: HTMLDivElement, value: number) =>
-          Math.min(getMaxScroll(listEl), Math.max(0, value));
-
-        const setControlledList = (listEl: HTMLDivElement) => {
-          if (controlledList === listEl) return;
-          listScrollTween?.kill();
-          controlledList = listEl;
-          scrollState.value = listEl.scrollTop;
-          scrollState.target = listEl.scrollTop;
+        const getNearestStage = (progress: number) => {
+          let nearestStage = 0;
+          let nearestDistance = Number.POSITIVE_INFINITY;
+          snapPoints.forEach((point, index) => {
+            const distance = Math.abs(progress - point);
+            if (distance < nearestDistance) {
+              nearestDistance = distance;
+              nearestStage = index;
+            }
+          });
+          return nearestStage;
         };
 
-        const animateListTo = (listEl: HTMLDivElement, nextTarget: number) => {
-          setControlledList(listEl);
-          scrollState.target = clampScroll(listEl, nextTarget);
+        const getNearestSnapPoint = (progress: number) =>
+          snapPoints[getNearestStage(progress)];
 
-          listScrollTween?.kill();
-          listScrollTween = gsap.to(scrollState, {
-            value: scrollState.target,
-            duration: 0.22,
-            ease: "power2.out",
-            overwrite: true,
-            onUpdate: () => {
-              if (!controlledList) return;
-              controlledList.scrollTop = clampScroll(controlledList, scrollState.value);
-            }
+        const getPinDistance = () => {
+          const panelHeight = cards[0]?.getBoundingClientRect().height ?? window.innerHeight;
+          const perStepDistance = Math.max(window.innerHeight * 0.95, panelHeight * 0.95);
+          return Math.round(
+            Math.max(window.innerHeight * 1.2, perStepDistance * Math.max(1, count - 1))
+          );
+        };
+
+        const setStageImmediate = (stage: number) => {
+          const clampedStage = clampIndex(stage);
+          queuedStage = null;
+          isAnimatingRef.current = false;
+          activeIndexRef.current = clampedStage;
+
+          cards.forEach((card, index) => {
+            gsap.set(card, {
+              yPercent: index === clampedStage ? 0 : 100,
+              autoAlpha: index === clampedStage ? 1 : 0,
+              zIndex: index + 1
+            });
           });
         };
 
-        const releaseListController = () => {
-          listScrollTween?.kill();
-          listScrollTween = null;
-          controlledList = null;
-        };
-
-        const canScrollList = (listEl: HTMLDivElement | null) => {
-          if (!listEl) return false;
-          return listEl.scrollHeight > listEl.clientHeight + 1;
-        };
-
-        const animateToIndex = (targetIndex: number) => {
-          if (isAnimatingRef.current) return;
+        const continueToQueuedStage = () => {
+          if (isAnimatingRef.current || queuedStage === null) return;
 
           const currentIndex = activeIndexRef.current;
-          if (targetIndex === currentIndex) return;
+          const targetStage = clampIndex(queuedStage);
 
-          const direction = targetIndex > currentIndex ? 1 : -1;
-          const nextCard = cards[targetIndex];
+          if (targetStage === currentIndex) {
+            queuedStage = null;
+            return;
+          }
+
+          const direction = targetStage > currentIndex ? 1 : -1;
+          const nextIndex = clampIndex(currentIndex + direction);
+          const nextCard = cards[nextIndex];
           const currentCard = cards[currentIndex];
 
           isAnimatingRef.current = true;
@@ -264,22 +212,9 @@ export default function ModellDetailSection() {
           const tl = gsap.timeline({
             defaults: { duration: 0.6, ease: "power2.out" },
             onComplete: () => {
-              activeIndexRef.current = targetIndex;
+              activeIndexRef.current = nextIndex;
               isAnimatingRef.current = false;
-              releaseListController();
-              const nextList = listRefs.current[targetIndex];
-              if (!nextList || !canScrollList(nextList)) {
-                activatePostSlideBoundaryLock(direction);
-                return;
-              }
-              const maxScroll = getMaxScroll(nextList);
-              const atTop = nextList.scrollTop <= 0.5;
-              const atBottom = nextList.scrollTop >= maxScroll - 0.5;
-              if ((direction > 0 && atBottom) || (direction < 0 && atTop)) {
-                activatePostSlideBoundaryLock(direction);
-              } else {
-                clearPostSlideBoundaryLock();
-              }
+              continueToQueuedStage();
             }
           });
 
@@ -291,157 +226,98 @@ export default function ModellDetailSection() {
             gsap.set(nextCard, { yPercent: 0, autoAlpha: 1 });
           }
         };
+
+        const requestStage = (stage: number) => {
+          queuedStage = clampIndex(stage);
+          continueToQueuedStage();
+        };
+
+        setStageImmediate(0);
+
         trigger = ScrollTrigger.create({
           trigger: stackRef.current,
           start: "top top",
-          end: () => `+=${(count - 1) * window.innerHeight}`,
+          end: () => `+=${getPinDistance()}`,
+          snap: {
+            snapTo: (value: number) => {
+              if (isListScrollGuardActive()) return value;
+              return getNearestSnapPoint(value);
+            },
+            directional: true,
+            inertia: false,
+            delay: 0,
+            duration: { min: 0.1, max: 0.2 },
+            ease: "power2.out"
+          },
           pin: true,
           pinSpacing: true,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            const desiredIndex = clampIndex(
-              Math.floor(self.progress * (count - 1) + SLIDE_SWITCH_BIAS)
-            );
             if (isScrollBlocked()) return;
-            const currentIndex = activeIndexRef.current;
-            if (!isAnimatingRef.current && desiredIndex !== currentIndex) {
-              const direction = desiredIndex > currentIndex ? 1 : -1;
-              const nextIndex = clampIndex(currentIndex + direction);
-              animateToIndex(nextIndex);
-            }
+            requestStage(getNearestStage(self.progress));
+          },
+          onRefresh: (self) => {
+            setStageImmediate(getNearestStage(self.progress));
           }
         });
 
-        const handleWheel = (event: WheelEvent) => {
+        const handleGuardWheel = (event: WheelEvent) => {
           if (!trigger?.isActive) return;
+          if (!isListScrollGuardActive()) return;
 
-          const listEl = listRefs.current[activeIndexRef.current];
-          const delta = event.deltaY;
-          const direction = delta > 0 ? 1 : delta < 0 ? -1 : 0;
-          const isNewGesture = markGestureActivity();
-
-          if (isPostSlideBoundaryLockRef.current) {
-            const lockDirection = postSlideLockDirectionRef.current;
-            if (!isNewGesture && (direction === 0 || direction === lockDirection)) {
-              event.preventDefault();
-              return;
-            }
-            clearPostSlideBoundaryLock();
-          }
-
-          if (isScrollBlocked()) {
-            event.preventDefault();
-
-            if (!listEl || !canScrollList(listEl)) return;
-
-            const effectiveScroll =
-              controlledList === listEl ? scrollState.target : listEl.scrollTop;
-            const maxScroll = getMaxScroll(listEl);
-            const atTop = effectiveScroll <= 0.5;
-            const atBottom = effectiveScroll >= maxScroll - 0.5;
-
-            if ((delta > 0 && !atBottom) || (delta < 0 && !atTop)) {
-              refreshListScrollLock();
-              animateListTo(listEl, effectiveScroll + delta);
-            }
+          const activeList = listRefs.current[activeIndexRef.current];
+          if (activeList && event.target instanceof Node && activeList.contains(event.target)) {
             return;
           }
 
-          if (!listEl || !canScrollList(listEl)) return;
+          event.preventDefault();
+        };
 
-          const effectiveScroll =
-            controlledList === listEl ? scrollState.target : listEl.scrollTop;
-          const maxScroll = getMaxScroll(listEl);
-          const atTop = effectiveScroll <= 0.5;
-          const atBottom = effectiveScroll >= maxScroll - 0.5;
+        window.addEventListener("wheel", handleGuardWheel, { passive: false });
 
-          if ((delta > 0 && !atBottom) || (delta < 0 && !atTop)) {
-            event.preventDefault();
-            refreshListScrollLock();
-            animateListTo(listEl, effectiveScroll + delta);
+        const handleViewportChange = () => {
+          if (resizeTimer !== null) {
+            window.clearTimeout(resizeTimer);
           }
-        };
-
-        const handleTouchStart = (event: TouchEvent) => {
-          touchStartY = event.touches[0]?.clientY ?? 0;
-          gestureActiveRef.current = false;
-          clearGestureIdleTimer();
-          clearPostSlideBoundaryLock();
-        };
-
-        const handleTouchMove = (event: TouchEvent) => {
-          if (!trigger?.isActive) return;
-
-          const listEl = listRefs.current[activeIndexRef.current];
-          const currentY = event.touches[0]?.clientY ?? 0;
-          const delta = touchStartY - currentY;
-          const direction = delta > 0 ? 1 : delta < 0 ? -1 : 0;
-          const isNewGesture = markGestureActivity();
-
-          if (isPostSlideBoundaryLockRef.current) {
-            const lockDirection = postSlideLockDirectionRef.current;
-            if (!isNewGesture && (direction === 0 || direction === lockDirection)) {
-              event.preventDefault();
-              touchStartY = currentY;
+          resizeTimer = window.setTimeout(() => {
+            const nextViewportWidth = window.innerWidth;
+            const nextViewportHeight = window.innerHeight;
+            if (
+              nextViewportWidth === lastViewportWidth &&
+              nextViewportHeight === lastViewportHeight
+            ) {
               return;
             }
-            clearPostSlideBoundaryLock();
-          }
-
-          if (isScrollBlocked()) {
-            event.preventDefault();
-
-            if (!listEl || !canScrollList(listEl)) {
-              touchStartY = currentY;
-              return;
-            }
-
-            const effectiveScroll =
-              controlledList === listEl ? scrollState.target : listEl.scrollTop;
-            const maxScroll = getMaxScroll(listEl);
-            const atTop = effectiveScroll <= 0.5;
-            const atBottom = effectiveScroll >= maxScroll - 0.5;
-
-            if ((delta > 0 && !atBottom) || (delta < 0 && !atTop)) {
-              refreshListScrollLock();
-              animateListTo(listEl, effectiveScroll + delta);
-            }
-            touchStartY = currentY;
-            return;
-          }
-
-          if (!listEl || !canScrollList(listEl)) return;
-
-          const effectiveScroll =
-            controlledList === listEl ? scrollState.target : listEl.scrollTop;
-          const maxScroll = getMaxScroll(listEl);
-          const atTop = effectiveScroll <= 0.5;
-          const atBottom = effectiveScroll >= maxScroll - 0.5;
-
-          if ((delta > 0 && !atBottom) || (delta < 0 && !atTop)) {
-            event.preventDefault();
-            refreshListScrollLock();
-            animateListTo(listEl, effectiveScroll + delta);
-            touchStartY = currentY;
-          }
+            lastViewportWidth = nextViewportWidth;
+            lastViewportHeight = nextViewportHeight;
+            scheduleScrollTriggerRefresh();
+          }, 120);
         };
 
-        window.addEventListener("wheel", handleWheel, { passive: false });
-        window.addEventListener("touchstart", handleTouchStart, { passive: true });
-        window.addEventListener("touchmove", handleTouchMove, { passive: false });
+        window.addEventListener("resize", handleViewportChange);
+        window.addEventListener("orientationchange", handleViewportChange);
 
         return () => {
-          window.removeEventListener("wheel", handleWheel);
-          window.removeEventListener("touchstart", handleTouchStart);
-          window.removeEventListener("touchmove", handleTouchMove);
+          if (resizeTimer !== null) {
+            window.clearTimeout(resizeTimer);
+          }
+          window.removeEventListener("wheel", handleGuardWheel);
+          window.removeEventListener("resize", handleViewportChange);
+          window.removeEventListener("orientationchange", handleViewportChange);
           isAnimatingRef.current = false;
-          gestureActiveRef.current = false;
-          clearGestureIdleTimer();
-          clearPostSlideBoundaryLock();
-          clearListScrollLock();
-          releaseListController();
           trigger?.kill();
         };
+      });
+
+      mm.add("(max-width: 1023px)", () => {
+        const cards = cardRefs.current.filter(Boolean) as HTMLDivElement[];
+        cards.forEach((card) => {
+          gsap.set(card, {
+            clearProps: "transform,opacity,visibility,zIndex"
+          });
+        });
+        activeIndexRef.current = 0;
+        isAnimatingRef.current = false;
       });
 
       return () => {
@@ -453,23 +329,17 @@ export default function ModellDetailSection() {
 
   const handleListWheel = (event: ReactWheelEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
-    const canScroll = target.scrollHeight > target.clientHeight;
+    const canScroll = target.scrollHeight > target.clientHeight + 1;
     if (!canScroll) return;
-    const atTop = target.scrollTop <= 0;
-    const atBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 1;
-    if ((event.deltaY < 0 && !atTop) || (event.deltaY > 0 && !atBottom)) {
-      refreshListScrollLock();
-      event.stopPropagation();
-    }
+    markListScrollGuard();
+    event.stopPropagation();
   };
 
-  const handleListTouchMove = (event: ReactTouchEvent<HTMLDivElement>) => {
+  const handleListScroll = (event: ReactUIEvent<HTMLDivElement>) => {
     const target = event.currentTarget;
-    const canScroll = target.scrollHeight > target.clientHeight;
-    if (canScroll) {
-      refreshListScrollLock();
-      event.stopPropagation();
-    }
+    const canScroll = target.scrollHeight > target.clientHeight + 1;
+    if (!canScroll) return;
+    markListScrollGuard();
   };
 
   return (
@@ -479,7 +349,7 @@ export default function ModellDetailSection() {
       innerClassName="w-full"
       useContentWrap={false}
     >
-      <div className="content-wrap max-w-[1440px] flex flex-col items-center gap-16 text-center">
+      <div className="content-wrap !max-w-[1280px] flex flex-col items-center gap-16 text-center">
         <div className="flex flex-col items-center gap-2">
           <h2 className="split-scale text-balance">DIE 5-S-MODULE IM DETAIL</h2>
           <h3 className="split-scale text-balance font-light">5 MODULE FÜR SICHERES WACHSTUM</h3>
@@ -583,9 +453,9 @@ export default function ModellDetailSection() {
                             panelClass
                           }
                         >
-                          <div className="flex h-full flex-col items-center justify-center gap-5 py-8 text-center lg:items-start lg:gap-8 lg:py-16 lg:text-left">
+                          <div className="flex h-full flex-col items-center justify-center gap-6 py-8 text-center lg:items-start lg:py-16 lg:text-left">
                             <h3 className="text-center text-balance font-semibold lg:text-left">{slide.title}</h3>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-1">
                               <h4 className="text-center text-fs-ui-200 text-balance font-semibold lg:text-left">
                                 {slide.subline}
                               </h4>
@@ -595,20 +465,20 @@ export default function ModellDetailSection() {
                               ref={(el) => {
                                 listRefs.current[index] = el;
                               }}
-                              className="slide-list-scroll mt-4 flex max-h-[220px] w-full flex-col gap-2 overflow-y-auto overflow-x-hidden overscroll-contain pr-1 text-left lg:mt-6 lg:max-h-[250px] lg:gap-4 lg:pr-2"
+                              className="slide-list-scroll mt-4 flex w-full flex-col gap-2 overflow-y-auto overflow-x-hidden overscroll-contain pr-2 text-left"
                               onWheel={handleListWheel}
-                              onTouchMove={handleListTouchMove}
+                              onScroll={handleListScroll}
                             >
                               {slide.list.map((entry) => (
-                                <div key={entry} className="flex flex-nowrap items-center gap-2 lg:gap-4">
-                                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-[#DBC18D42] lg:h-[41px] lg:w-[41px]">
+                                <div key={entry} className="flex flex-nowrap items-center gap-2">
+                                  <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full border border-[#DBC18D42]">
                                     <img
                                       src="/assets/sections/modell-detail/arrow-icon.svg"
                                       alt=""
-                                      className="h-[11px] w-[11px]"
+                                      className="h-3 w-3"
                                     />
                                   </span>
-                                  <p className="min-w-0 flex-shrink flex-grow-0 rounded-[30px] border border-[#DBC18D42] px-3 py-1.5 text-left text-balance lg:px-4 lg:py-2">
+                                  <p className="min-w-0 flex-shrink flex-grow-0 rounded-[30px] border border-[#DBC18D42] px-4 text-left text-balance py-2">
                                     {entry}
                                   </p>
                                 </div>

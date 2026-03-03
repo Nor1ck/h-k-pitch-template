@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useGSAP } from "@gsap/react";
@@ -557,4 +557,3 @@ export default function TeamVideo() {
     </section>
   );
 }
-

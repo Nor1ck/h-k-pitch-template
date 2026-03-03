@@ -18,16 +18,17 @@ const works: WorkItem[] = [
   },
   {
     title: "TalentRadar für Employer Branding",
-    image: "/assets/sections/works/talent-radar.png"
+    image: "/assets/sections/works/talent-radar.jpg"
   },
   {
     title: "KI-gestütztes Support-Framework für wiederkehrende Anfragen",
     image: "/assets/sections/works/ki-framework.png"
   },
   {
-    title: "Jährlicher Markt- und Vertrauensreport",
-    description: "Ein strukturierter Blick auf Chancen, Risiken und Entscheidungen.",
-    image: "/assets/sections/works/trust-reports.png"
+    title: "Eigene Contentformate",
+    description:
+      "Formate mit klarem Profil, die Relevanz schaffen und Vertrauen bei Ihrer Zielgruppe aufbauen.",
+    image: "/assets/sections/works/brainfuck.jpeg"
   },
   {
     title: "Leadership Summit für Entscheider",
