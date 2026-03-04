@@ -148,6 +148,27 @@ export default function ModellSection() {
       let activeHighlightIndex = -1;
       let lastProgress = 0;
       let trigger: ScrollTrigger | null = null;
+      let cardHeightResizeObserver: ResizeObserver | null = null;
+
+      const syncCardHeights = () => {
+        if (!trackRef.current) return;
+        const cards = Array.from(
+          trackRef.current.querySelectorAll<HTMLElement>("[data-timeline-card]")
+        );
+        if (!cards.length) return;
+
+        cards.forEach((card) => {
+          card.style.minHeight = "";
+        });
+
+        const tallestCard = Math.ceil(
+          Math.max(...cards.map((card) => card.getBoundingClientRect().height))
+        );
+
+        cards.forEach((card) => {
+          card.style.minHeight = `${tallestCard}px`;
+        });
+      };
 
       const getStageFromProgress = (progress: number): Stage => {
         const points = [0, 0.25, 0.5, 0.75, 1] as const;
@@ -205,6 +226,18 @@ export default function ModellSection() {
       gsap.set(trackRef.current, { x: metrics.startOffset });
       setTrackFromProgress(0);
       setHighlight(0, true);
+      syncCardHeights();
+
+      if (typeof ResizeObserver !== "undefined") {
+        cardHeightResizeObserver = new ResizeObserver(() => {
+          syncCardHeights();
+        });
+
+        const cards = Array.from(
+          trackRef.current.querySelectorAll<HTMLElement>("[data-timeline-card]")
+        );
+        cards.forEach((card) => cardHeightResizeObserver?.observe(card));
+      }
 
       trigger = ScrollTrigger.create({
         trigger: viewportRef.current,
@@ -233,11 +266,13 @@ export default function ModellSection() {
         },
         onRefreshInit: () => {
           metrics = getMetrics();
+          syncCardHeights();
           setTrackFromProgress(lastProgress);
           setHighlight(getHighlightIndexFromStage(getStageFromProgress(lastProgress)), true);
         },
         onRefresh: (self) => {
           metrics = getMetrics();
+          syncCardHeights();
           lastProgress = self.progress;
           setTrackFromProgress(lastProgress);
           setHighlight(getHighlightIndexFromStage(getStageFromProgress(lastProgress)), true);
@@ -259,6 +294,7 @@ export default function ModellSection() {
           }
           lastViewportWidth = nextViewportWidth;
           lastViewportHeight = nextViewportHeight;
+          syncCardHeights();
           scheduleScrollTriggerRefresh();
         }, 120);
       };
@@ -272,6 +308,13 @@ export default function ModellSection() {
         }
         window.removeEventListener("resize", handleViewportChange);
         window.removeEventListener("orientationchange", handleViewportChange);
+        cardHeightResizeObserver?.disconnect();
+        const cards = Array.from(
+          trackRef.current?.querySelectorAll<HTMLElement>("[data-timeline-card]") ?? []
+        );
+        cards.forEach((card) => {
+          card.style.minHeight = "";
+        });
         trigger?.kill();
         trigger = null;
       };
@@ -348,8 +391,8 @@ export default function ModellSection() {
                 key={card.title}
                 data-timeline-card
                 className={
-                  "relative flex min-h-[260px] w-full flex-none flex-col overflow-hidden rounded-[50px] border border-[#DBC18D]/30 bg-[linear-gradient(90deg,#080716_0%,#080716_100%)] p-8 transition-[border-color] duration-300 ease-out lg:w-[calc((min(1280px,100vw)-3rem)/3)] lg:p-10 " +
-                  (index % 2 === 0 ? "lg:self-start" : "lg:self-end lg:mt-20")
+                  "relative flex min-h-[260px] w-full flex-none flex-col overflow-hidden rounded-[50px] border border-[#DBC18D]/30 bg-[linear-gradient(90deg,#080716_0%,#080716_100%)] px-8 py-10 transition-[border-color] duration-300 ease-out lg:w-[calc((min(1280px,100vw)-2rem)/2.8)] lg:px-10 lg:py-12 " +
+                  (index % 2 === 0 ? "lg:self-start" : "lg:self-end lg:mt-24")
                 }
               >
                 <div
