@@ -31,24 +31,25 @@ type Tab = {
 const todayItems: Item[] = [
   {
     id: "today-1",
-    title: "Klare Leistungsfelder mit gemeinsamer Zielrichtung",
-    subtitle: "Beratung. Umsetzung. Weiterentwicklung.",
+    title: "Viel Bewegung im Unternehmen – aber noch kein echtes Wachstumssystem.",
+    subtitle:
+      "Viele Initiativen laufen parallel. Doch Strategie, Marketing, Vertrieb und Organisation greifen noch nicht vollständig ineinander.",
     body:
-      "Ihre Leistungen greifen bereits ineinander. Dieses Fundament ermöglicht eine durchgängige Kundenerfahrung und stärkt die Positionierung."
+      "Viele Unternehmen investieren viel Aufwand in Marketing & Vertrieb. Neue Ideen entstehen, Projekte werden gestartet, Maßnahmen umgesetzt. Doch häufig entwickeln sich diese Aktivitäten nebeneinander und nicht als ein gemeinsames System. Strategie, Marketing, Vertrieb und Organisation verfolgen ähnliche Ziele, aber nicht immer dieselbe Richtung. So entsteht viel Bewegung im Unternehmen – aber nicht immer die Wirkung, die eigentlich möglich wäre."
   },
   {
     id: "today-2",
     title: "Kundengewinnung über Netzwerk und Empfehlungen",
-    subtitle: "Vertrauen wirkt, ist aber nur begrenzt skalierbar.",
+    subtitle: "Vertrauen wirkt – aber es ist schwer skalierbar.",
     body:
-      "Neue Anfragen entstehen aktuell vor allem über persönliche Kontakte, Empfehlungen und bestehende Beziehungen."
+      "Viele Anfragen entstehen heute über persönliche Kontakte, Empfehlungen oder bestehende Beziehungen. Das ist ein starkes Fundament. Gleichzeitig fehlt oft eine zusätzliche, systematische Sichtbarkeit im Markt. Neue Nachfrage entsteht deshalb nicht planbar – sondern vor allem dann, wenn jemand aktiv auf das Unternehmen zukommt."
   },
   {
     id: "today-3",
     title: "Starke Bindung bei bestehenden Kunden",
-    subtitle: "Langfristiges Vertrauen ist ein echter Wettbewerbsvorteil.",
+    subtitle: "Langfristige Kundenbeziehungen sind ein echter Wettbewerbsvorteil.",
     body:
-      "Die bestehenden Kundenbeziehungen zeigen Verlässlichkeit und Qualität. Dieses Vertrauen kann strategisch in planbares Wachstum übersetzt werden."
+      "Bestehende Kunden vertrauen Dir und Deinem Unternehmen, oft seit vielen Jahren. Und gleichzeitig wissen potenzielle Neukunden oft nicht, warum sie genau Deine Produkte oder Leistungen kaufen sollen. Die langjährigen Kunden zeigen, dass es dafür gute Argumente und genau hier liegt Dein Potenzial. Wenn Vertrauen strategisch genutzt wird, kann daraus planbares Wachstum entstehen – über eine klare Positionierung, eine prägnante Markenstrategie und Reputationsmarketing."
   }
 ];
 
@@ -65,7 +66,7 @@ const potentialsItems: Item[] = [
     title: "Schärfere Positionierung als strategischer Partner",
     subtitle: "Differenzierung statt Austauschbarkeit.",
     body:
-      "Mit einem klaren Nutzenversprechen wird Ihr Unternehmen stärker als strategischer Partner wahrgenommen und nicht nur als operativer Dienstleister."
+      "Mit einem klaren Nutzenversprechen wird Dein Unternehmen stärker als strategischer Partner wahrgenommen und nicht nur als operativer Dienstleister."
   },
   {
     id: "pot-3",
@@ -84,9 +85,11 @@ const tomorrowItems: Item[] = [
       "Ihr Unternehmen ist dort präsent, wo Entscheider recherchieren, vergleichen und priorisieren.",
     body: "",
     list: [
-      "Suchmaschinen",
-      "KI-gestützte Rechercheumfelder",
-      "relevante Netzwerke und Fachplattformen"
+      "In Google, KIs wie ChatGPT oder Gemini, und weiteren Suchmaschinen",
+      "Auf Social Media, wo Deine Kunden und Bewerber unterwegs sind",
+      "In relevanten Netzwerken",
+      "Auf Events, Messen und Kongressen",
+      "In Podcasts, Youtube usw."
     ],
     bodyAfterList:
       "Nicht zufallsgetrieben, sondern mit klaren Prozessen, messbarer Sichtbarkeit und planbaren qualifizierten Anfragen."
@@ -98,8 +101,8 @@ const tomorrowItems: Item[] = [
       "Der Markt nimmt Ihr Unternehmen als verlässlichen Partner wahr. Als starke Instanz für:",
     body: "",
     list: [
-      "klare Entscheidungsgrundlagen",
-      "wirksame Umsetzung",
+      "Klare Leistungsrahmen",
+      "Relevante Nutzerversprechen",
       "nachhaltige Ergebnisse"
     ],
     bodyAfterList:
@@ -109,13 +112,12 @@ const tomorrowItems: Item[] = [
     id: "mor-3",
     title: "Skalierbares Wachstumsmodell mit Substanz",
     subtitle:
-      "Ihr Unternehmen wird zur ersten Wahl, wenn Qualität, Verlässlichkeit und Verantwortung entscheidend sind. Wahrgenommen werden:",
+      "Dein Unternehmen wird zur ersten Wahl, wenn nachhaltige Werte beim Kunden entscheidend sind:",
     body: "",
     list: [
-      "fachliche Kompetenz",
-      "konsistente Qualität",
-      "belastbare Prozesse",
-      "langfristige Wirksamkeit"
+      "Qualität",
+      "Verantwortung",
+      "Verlässlichkeit"
     ],
     bodyAfterList:
       "So entsteht eine Positionierung, die nicht austauschbar ist."

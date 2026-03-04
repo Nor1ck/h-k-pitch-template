@@ -270,7 +270,7 @@ export default function TestimonialSlider() {
                     </p>
                   </div>
 
-                  <div className="mt-10 flex flex-col items-center justify-center gap-4 text-center lg:mt-14 lg:flex-row lg:flex-nowrap lg:gap-8 lg:text-left">
+                  <div className="mt-10 flex flex-col items-center justify-center gap-3 text-center lg:mt-14">
                     <div className="relative h-14 w-14 flex-none">
                       <Image
                         src={item.logo}
@@ -280,11 +280,11 @@ export default function TestimonialSlider() {
                         className="object-contain"
                       />
                     </div>
-                    <p className="grow text-center leading-[1.3] text-white lg:text-start">
-                      <strong className="text-fs-ui-300 font-semibold block">{item.name}</strong>{" "}
+                    <p className="text-center leading-[1.3] text-white">
+                      <strong className="text-fs-ui-300 font-semibold block">{item.name}</strong>
                       <span className="text-fs-ui-300 font-light">{item.role}</span>
                     </p>
-                    <div className="flex items-center gap-1 text-fs-ui-300">
+                    <div className="mt-1 flex items-center justify-center gap-1 text-fs-ui-300">
                       {Array.from({ length: 5 }).map((_, starIndex) => (
                         <span key={starIndex} className="text-[#DBC18D]">
                           ★
