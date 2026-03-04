@@ -171,7 +171,10 @@ export default function CaseStudiesSection() {
                         alt={item.title}
                         fill
                         sizes={cardImageSizes}
-                        className="object-contain"
+                        className={
+                          "object-contain " +
+                          (item.title === "ProvenExpert" ? "brightness-0 invert" : "")
+                        }
                       />
                     </div>
                     <div data-case-text className="flex flex-col gap-2">

@@ -33,7 +33,7 @@ const works: WorkItem[] = [
   {
     title: "Leadership Summit für Entscheider",
     description:
-      "Ein exklusives Format für strategischen Austausch auf Geschäftsführungs- und Leitungsebene.",
+      "Ein exklusives Format für strategischen Austausch für Führungskräfte.",
     image: "/assets/sections/works/summit.png"
   }
 ];

@@ -220,7 +220,10 @@ export default function OverviewSection() {
                     alt={badge.name}
                     fill
                     sizes="96px"
-                    className="object-contain"
+                    className={
+                      "object-contain " +
+                      (badge.name === "Proven Expert" ? "brightness-0 invert" : "")
+                    }
                   />
                 </div>
               ))}
@@ -234,7 +237,10 @@ export default function OverviewSection() {
                   alt={badge.name}
                   fill
                   sizes="128px"
-                  className="object-contain will-change-transform overflow-visible"
+                  className={
+                    "object-contain will-change-transform overflow-visible " +
+                    (badge.name === "Proven Expert" ? "brightness-0 invert" : "")
+                  }
                   data-badge
                 />
               </div>

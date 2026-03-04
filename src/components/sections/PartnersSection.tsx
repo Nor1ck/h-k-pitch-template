@@ -195,7 +195,10 @@ export default function PartnersSection() {
                           alt={logo.name}
                           width={logo.width}
                           height={logo.height}
-                          className="h-full w-auto object-contain"
+                          className={
+                            "h-full w-auto object-contain " +
+                            (logo.name === "ProvenExpert" ? "brightness-0 invert" : "")
+                          }
                         />
                       </div>
                     </div>
@@ -216,7 +219,10 @@ export default function PartnersSection() {
                           alt=""
                           width={logo.width}
                           height={logo.height}
-                          className="h-full w-auto object-contain"
+                          className={
+                            "h-full w-auto object-contain " +
+                            (logo.name === "ProvenExpert" ? "brightness-0 invert" : "")
+                          }
                         />
                       </div>
                     </div>
