@@ -14,14 +14,20 @@ type WorkItem = {
 const works: WorkItem[] = [
   {
     title: "Redaktionsplanung für Thought Leadership",
+    description:
+      "Klare Themenreize, rhythmische Wiederholung und konsistente Botschaften machen Expertise im Kopf der Entscheider dauerhaft präsent.",
     image: "/assets/sections/works/daimler-board.png"
   },
   {
     title: "TalentRadar für Employer Branding",
+    description:
+      "Präzise Signale zu Motivation und Passung reduzieren kognitive Unsicherheit und stärken die Entscheidung für dein Unternehmen.",
     image: "/assets/sections/works/talent-radar.jpg"
   },
   {
     title: "KI-gestütztes Support-Framework für wiederkehrende Anfragen",
+    description:
+      "Standardisierte Antwortmuster entlasten Aufmerksamkeit, erhöhen Verarbeitungsfluss und erzeugen verlässliche Servicequalität bei jeder Anfrage.",
     image: "/assets/sections/works/ki-framework.png"
   },
   {
