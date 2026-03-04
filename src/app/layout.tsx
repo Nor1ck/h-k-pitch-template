@@ -20,7 +20,7 @@ const ralewayBody = Raleway({
 });
 
 export const metadata: Metadata = {
-  title: "Pitch Template | Hein & Kollegen",
+  title: "5-S | Wachstum mit System",
   description:
     "Modulares Pitch-Template für kundenneutrale Präsentationen mit Next.js, Tailwind und GSAP."
 };
