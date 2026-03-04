@@ -1,0 +1,3 @@
+[phases.build]
+# Definiert die expliziten Cache-Verzeichnisse und schließt die Datei tsconfig.tsbuildinfo aus
+cacheDirectories = ['.next/cache', 'node_modules/.cache']
