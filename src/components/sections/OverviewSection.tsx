@@ -23,7 +23,7 @@ const badges = [
   { name: "LinkedIn 2", src: "/assets/sections/overview/linkedIn-siegel2.png" },
   { name: "Meta", src: "/assets/sections/overview/meta-siegel.png" },
   { name: "Google", src: "/assets/sections/overview/google-siegel.png" },
-  { name: "Proven Expert", src: "/assets/sections/overview/proven-expert-premium-partner-badge.svg" }
+  { name: "Proven Expert", src: "/assets/sections/overview/proven-expert-siegel.png" }
 ];
 
 export default function OverviewSection() {
