@@ -23,7 +23,7 @@ const badges = [
   { name: "LinkedIn 2", src: "/assets/sections/overview/linkedIn-siegel2.png" },
   { name: "Meta", src: "/assets/sections/overview/meta-siegel.png" },
   { name: "Google", src: "/assets/sections/overview/google-siegel.png" },
-  { name: "Proven Expert", src: "/assets/sections/overview/proven-expert-siegel.png" }
+  { name: "Proven Expert", src: "/assets/sections/overview/proven-expert-premium-partner-badge.svg" }
 ];
 
 export default function OverviewSection() {
@@ -220,10 +220,7 @@ export default function OverviewSection() {
                     alt={badge.name}
                     fill
                     sizes="96px"
-                    className={
-                      "object-contain " +
-                      (badge.name === "Proven Expert" ? "brightness-0 invert" : "")
-                    }
+                    className="object-contain"
                   />
                 </div>
               ))}
@@ -237,10 +234,7 @@ export default function OverviewSection() {
                   alt={badge.name}
                   fill
                   sizes="128px"
-                  className={
-                    "object-contain will-change-transform overflow-visible " +
-                    (badge.name === "Proven Expert" ? "brightness-0 invert" : "")
-                  }
+                  className="object-contain will-change-transform overflow-visible"
                   data-badge
                 />
               </div>
