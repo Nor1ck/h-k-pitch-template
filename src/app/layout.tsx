@@ -42,7 +42,7 @@ export default function RootLayout({
           {children}
           <div id="ProvenExpert_widgetbar_container" />
           <Script
-            src="https://www.provenexpert.com/widget/bar_hein-kollegen.js?style=black&feedback=1"
+            src="https://www.provenexpert.com/widget/bar_hein-kollegen.js?style=white&feedback=1"
             strategy="afterInteractive"
           />
           <PageLoader />
