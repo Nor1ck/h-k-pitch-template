@@ -26,6 +26,8 @@ const badges = [
   { name: "Proven Expert", src: "/assets/sections/overview/proven-expert-siegel.png" }
 ];
 
+const whiteBadgeStyle = { filter: "brightness(0) invert(1)" };
+
 export default function OverviewSection() {
   const sectionRef = useRef<HTMLDivElement | null>(null);
   const countersRef = useRef<HTMLDivElement | null>(null);
@@ -221,6 +223,7 @@ export default function OverviewSection() {
                     fill
                     sizes="96px"
                     className="object-contain"
+                    style={badge.name === "Proven Expert" ? whiteBadgeStyle : undefined}
                   />
                 </div>
               ))}
@@ -235,6 +238,7 @@ export default function OverviewSection() {
                   fill
                   sizes="128px"
                   className="object-contain will-change-transform overflow-visible"
+                  style={badge.name === "Proven Expert" ? whiteBadgeStyle : undefined}
                   data-badge
                 />
               </div>
